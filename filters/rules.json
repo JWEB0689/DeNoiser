@@ -35,6 +35,16 @@
         "^Step \\d+/\\d+\\s*:.*"
       ],
       "action": "drop"
+    },
+    {
+      "name": "Mistake Catching (Error Isolation)",
+      "patterns": [
+        "^(Error|Exception|Traceback|FATAL|ERR!|FAILED|CRITICAL|Traceback \\(most recent call last\\)):?.*",
+        "(?i).*error:.*",
+        "^\\s*at \\S+\\s+\\(.*\\)",
+        "^\\s*File \".*\", line \\d+.*"
+      ],
+      "action": "keep"
     }
   ]
 }

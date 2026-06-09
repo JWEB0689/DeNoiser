@@ -27,12 +27,35 @@ class FilterEngine:
     def filter_output(self, raw_text: str) -> str:
         """
         Processes multi-line terminal output against heuristic regex filters.
-        Drops lines that match noise patterns to compress tokens.
+        Supports 'drop' (stripping noise) and 'keep' (error isolation).
         """
         if not raw_text:
             return ""
             
         lines = raw_text.splitlines()
+        
+        # 1. Check for Mistake/Error Isolation ('keep' rules)
+        # If the output contains errors, we want to isolate them and drop all other noise.
+        error_lines = []
+        for line in lines:
+            keep = False
+            for rule in self.rules:
+                if rule["action"] == "keep":
+                    for pattern in rule["patterns"]:
+                        if pattern.match(line):
+                            keep = True
+                            break
+                if keep:
+                    break
+            if keep:
+                error_lines.append(line)
+                
+        # If we caught mistakes, return ONLY the isolated mistakes to maximize token savings.
+        if error_lines:
+            error_lines.append(f"\n[RTK Engine] Isolated {len(error_lines)} error/mistake lines. All other output was dropped.")
+            return "\n".join(error_lines)
+            
+        # 2. Normal Noise Stripping ('drop' rules)
         filtered_lines = []
         dropped_count = 0
         
@@ -52,7 +75,6 @@ class FilterEngine:
             else:
                 filtered_lines.append(line)
                 
-        # Optional: Add a truncation notice if we dropped lines
         if dropped_count > 0:
             filtered_lines.append(f"\n[RTK Engine] Filtered {dropped_count} noisy lines from output.")
             
