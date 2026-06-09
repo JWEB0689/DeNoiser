@@ -26,19 +26,36 @@ Instead of blindly sending thousands of system prompts and chat history items to
 - Python 3.10+
 - `uv` (Fast Python Package Manager)
 
-### Running the Server
-
+### 1. HTTP Server (For Agent Desktop)
+Runs the standard HTTP REST API on port `4000`.
 ```bash
-# 1. Clone this repository
-git clone https://github.com/JWEB0689/rtk-engine.git
-cd rtk-engine
-
-# 2. Install dependencies & run the server
+# Install dependencies
 uv pip install -r requirements.txt
+
+# Run the server
 uv run uvicorn main:app --host 0.0.0.0 --port 4000 --reload
 ```
 
-The server will initialize on `http://localhost:4000`.
+### 2. Universal MCP Server
+If you want to plug the RTK Engine into **Claude Desktop**, **Cursor**, or any other Model Context Protocol agent, you can attach it directly using the Stdio entrypoint:
+```json
+{
+  "mcpServers": {
+    "rtk-engine": {
+      "command": "uv",
+      "args": ["run", "mcp_server.py"],
+      "cwd": "/path/to/rtk-engine"
+    }
+  }
+}
+```
+
+### 3. Docker (Cloud API Deployment)
+To host the RTK Engine on the cloud (Render, AWS, Heroku) so any agent on the internet can reach it:
+```bash
+docker build -t rtk-engine .
+docker run -p 4000:4000 rtk-engine
+```
 
 ## 📡 API Reference
 
