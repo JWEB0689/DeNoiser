@@ -57,6 +57,14 @@ docker build -t rtk-engine .
 docker run -p 4000:4000 rtk-engine
 ```
 
+### 4. Standalone Global CLI (Windows)
+You can use the engine exactly like the original Rust tool locally in your own terminal without running any servers!
+1. Open your Windows Start Menu and search for **"Environment Variables"**.
+2. Edit the **PATH** variable.
+3. Add the absolute path to this folder (e.g., `C:\Users\Jwebe\Documents\rtk-engine`).
+4. Restart your terminal.
+You can now prefix any massive command with `rtk` (e.g., `rtk npm install` or `rtk git status`) from anywhere on your PC, and it will instantly filter the noise and print beautifully optimized output back to your screen!
+
 ## 📡 API Reference
 
 ### `POST /api/compress`
