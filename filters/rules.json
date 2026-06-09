@@ -1,0 +1,40 @@
+{
+  "filters": [
+    {
+      "name": "Git Compressions",
+      "patterns": [
+        "^(Enumerating objects|Counting objects|Compressing objects|Writing objects|Total):.*",
+        "^\\s*(remote:).*",
+        "^\\s*Delta compression using up to.*"
+      ],
+      "action": "drop"
+    },
+    {
+      "name": "NPM / Package Manager Noise",
+      "patterns": [
+        "^npm (WARN|info|notice).*",
+        "^\\s*added \\d+ packages.*",
+        "^\\s*audited \\d+ packages.*",
+        "^\\s*found \\d+ vulnerabilities.*"
+      ],
+      "action": "drop"
+    },
+    {
+      "name": "Testing Frameworks (Success Stripping)",
+      "patterns": [
+        "^test.*\\.\\.\\. ok$",
+        "^\\s*PASS\\s+.*",
+        "^\\s*✓\\s+.*"
+      ],
+      "action": "drop"
+    },
+    {
+      "name": "Docker & Build Logs",
+      "patterns": [
+        "^\\s*--->.*",
+        "^Step \\d+/\\d+\\s*:.*"
+      ],
+      "action": "drop"
+    }
+  ]
+}

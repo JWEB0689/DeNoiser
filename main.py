@@ -39,6 +39,10 @@ class ProxyRequest(BaseModel):
     payload: str
     rtkConfig: RTKConfig
 
+class FilterRequest(BaseModel):
+    command: Optional[str] = None
+    raw_output: str
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "rtk-engine", "version": "1.0.0"}
@@ -94,6 +98,18 @@ async def proxy_bypass(req: ProxyRequest):
         "status": "success",
         "provider": req.rtkConfig.modelRoute,
         "response": f"Simulated proxy response from {req.rtkConfig.modelRoute}. In a production environment, this engine will forward the payload using proprietary API keys hidden from the frontend client."
+    }
+
+@app.post("/api/filter")
+def filter_output(req: FilterRequest):
+    from filters.engine import engine
+    filtered = engine.filter_output(req.raw_output)
+    
+    return {
+        "status": "success",
+        "original_length": len(req.raw_output),
+        "filtered_length": len(filtered),
+        "filtered_output": filtered
     }
 
 if __name__ == "__main__":
