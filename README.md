@@ -1,7 +1,7 @@
 <div align="center">
   <h1>RTK Engine API</h1>
   <p><strong>Proprietary Token Compression & Autonomous Bypass Server</strong></p>
-  <img src="https://img.shields.io/badge/Node.js-Express-emerald?style=for-the-badge" alt="Stack" />
+  <img src="https://img.shields.io/badge/Python-FastAPI-blue?style=for-the-badge" alt="Stack" />
   <img src="https://img.shields.io/badge/Access-Private-rose?style=for-the-badge" alt="Private" />
 </div>
 
@@ -9,7 +9,7 @@
 
 ## Overview
 
-The **RTK (Real-Time Knowledge) Engine** is a lightweight, high-performance local backend built to service the [Agent Desktop](https://github.com/JWEB0689/Agent) application.
+The **RTK (Real-Time Knowledge) Engine** is a high-performance local Python backend built to service the [Agent Desktop](https://github.com/JWEB0689/Agent) application. 
 
 Its primary responsibility is to intercept massive conversational payloads from the Agent client, mathematically compress the token context window using sliding-window heuristics, and proxy the optimized payload to LLM providers. This prevents token explosion in long-running autonomous sessions.
 
@@ -23,7 +23,8 @@ Instead of blindly sending thousands of system prompts and chat history items to
 ## 🚀 Setup & Execution
 
 ### Prerequisites
-- Node.js (v20+)
+- Python 3.10+
+- `uv` (Fast Python Package Manager)
 
 ### Running the Server
 
@@ -32,11 +33,9 @@ Instead of blindly sending thousands of system prompts and chat history items to
 git clone https://github.com/JWEB0689/rtk-engine.git
 cd rtk-engine
 
-# 2. Install dependencies
-npm install
-
-# 3. Start the engine
-node index.js
+# 2. Install dependencies & run the server
+uv pip install -r requirements.txt
+uv run uvicorn main:app --host 0.0.0.0 --port 4000 --reload
 ```
 
 The server will initialize on `http://localhost:4000`.
