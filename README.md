@@ -65,6 +65,14 @@ denoiser pytest tests/
 ```
 *(DeNoiser strips all the `test_xyz... ok` lines. If a test fails, it extracts ONLY the traceback!)*
 
+## 🔍 Native Meta-Commands
+
+DeNoiser includes several built-in commands to help you diagnose and verify your installation:
+
+- `denoiser version`: Display the current version.
+- `denoiser list`: List all currently loaded TOML filter rules (from `builtin.toml`).
+- `denoiser test`: Run a built-in diagnostic test. This artificially generates noisy terminal output and immediately filters it, allowing you to visually verify the engine is working on your machine.
+
 ---
 
 ## 🔌 Usage (MCP Server)

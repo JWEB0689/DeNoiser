@@ -2,13 +2,47 @@ import sys
 import subprocess
 from filters.engine import engine
 
+VERSION = "v1.1.0"
+
+def print_usage():
+    print("Usage: denoiser <command> [args...]")
+    print("\nMeta-commands:")
+    print("  denoiser version   : Show the current version.")
+    print("  denoiser list      : List all loaded TOML filter rules.")
+    print("  denoiser test      : Run a built-in diagnostic test to verify filtering.")
+    print("\nExample: denoiser git status")
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: denoiser <command> [args...]")
-        print("Example: denoiser git status")
+        print_usage()
         sys.exit(1)
         
     command = sys.argv[1:]
+    
+    # Native Meta-Command Interception
+    if command[0] == "version":
+        print(f"DeNoiser {VERSION}")
+        sys.exit(0)
+    elif command[0] == "list":
+        print(f"--- Loaded DeNoiser Filters ({len(engine.filters)}) ---")
+        for f in engine.filters:
+            print(f"[{f['id']}] -> matches '{f['match_command'].pattern}'")
+        sys.exit(0)
+    elif command[0] == "test":
+        print("Running DeNoiser native diagnostic test...")
+        fake_command = "npm install fake-package"
+        fake_output = (
+            "npm WARN deprecated fake-package@1.0.0: this package is deprecated\n"
+            "added 42 packages, and audited 43 packages in 3s\n"
+            "found 0 vulnerabilities\n"
+            "Successfully installed fake-package!\n"
+        )
+        print("\n--- RAW OUTPUT (What LLM normally sees) ---")
+        print(fake_output.strip())
+        print("\n--- FILTERED OUTPUT (What LLM actually sees) ---")
+        filtered = engine.filter_output(fake_command, fake_output)
+        print(filtered)
+        sys.exit(0)
     
     try:
         # Execute the raw command, merging stderr into stdout for complete filtering
