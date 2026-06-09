@@ -1,24 +1,28 @@
 <div align="center">
-  <h1>DeNoiser (Python)</h1>
-  <p><strong>Universal Token Compression CLI & MCP Server</strong></p>
+  <h1>DeNoiser</h1>
+  <p><strong>Universal Token Compression CLI & MCP Server for LLM Agents</strong></p>
   <img src="https://img.shields.io/badge/Python-CLI-blue?style=for-the-badge" alt="Stack" />
 </div>
 
 ---
 
-## Overview
+## 🛑 The Problem
 
-**DeNoiser** is a high-performance Python CLI and MCP Server that filters and compresses command outputs before they reach your LLM context window. 
+When coding with AI Agents (like Claude Code, Cursor, Antigravity, etc.), running background terminal commands consumes **massive amounts of context tokens**. Commands like `npm install`, `git status`, or large test suites (`pytest`, `jest`) spit out thousands of lines of verbose logs, success indicators, and progress bars. 
 
-Instead of blindly sending thousands of lines of terminal noise to an LLM, DeNoiser applies heuristic filters to:
-1. Strip out verbose logs, success messages, and boilerplate.
-2. Isolate mistakes and errors.
-3. Massively reduce token consumption for long-running autonomous sessions.
+Blindly feeding this noise into the LLM context window leads to:
+- **Exploding API Costs:** Wasting tokens on useless boilerplate.
+- **Context Degradation:** The LLM "forgets" important instructions because its context is flooded with terminal noise.
 
-## ⚙️ How It Works
+## 💡 The Solution
 
-You can use the `denoiser` wrapper in front of any command.
-```
+**DeNoiser** is a high-performance Python utility that intercepts and heuristically filters command outputs *before* they reach your LLM.
+
+1. **Strips Noise:** Automatically drops progress bars, `npm` warnings, success checks, and verbose build logs.
+2. **Isolates Errors:** If a command fails, DeNoiser specifically hunts down the Exception/Traceback and extracts *only* the error lines, ensuring your agent instantly sees the problem without the bloat.
+3. **Saves Tokens:** Routinely reduces terminal output token consumption by **60-90%**.
+
+```text
   Without denoiser:                               With denoiser:
 
   LLM Agent  --git status-->  git                 LLM Agent  --git status-->  DeNoiser  -->  git
@@ -27,43 +31,65 @@ You can use the `denoiser` wrapper in front of any command.
   <-----------------------------+                 <------------- (filtered) ----+----------+
 ```
 
-## 🚀 Setup & Execution
+---
 
-### Prerequisites
-- Python 3.10+
-- `uv` (Fast Python Package Manager)
+## 🚀 Installation
 
-### 1. Standalone Global CLI (Windows)
-You can use the engine locally in your own terminal to wrap any noisy command!
-1. Open your Windows Start Menu and search for **"Environment Variables"**.
-2. Edit the **PATH** variable.
-3. Add the absolute path to this folder.
-4. Restart your terminal.
+You don't even need Python installed to use DeNoiser. You can download the pre-compiled, standalone executable directly from GitHub Releases!
 
-You can now prefix any massive command with `denoiser` (e.g., `denoiser npm install` or `denoiser git status`) from anywhere on your PC, and it will instantly filter the noise and print beautifully optimized output back to your screen!
+1. Go to the **Releases** page on this repository.
+2. Download the binary for your operating system:
+   - **Windows:** `denoiser-windows.exe`
+   - **macOS:** `denoiser-macos`
+   - **Linux:** `denoiser-linux`
+3. Rename the downloaded file to just `denoiser` (or `denoiser.exe` on Windows).
+4. Move it into a directory that is in your system's `PATH` (e.g., `C:\Program Files\DeNoiser` or `~/.local/bin`).
 
-### 2. Universal MCP Server
-If you want to plug DeNoiser into **Claude Desktop**, **Cursor**, **Antigravity**, or any other Model Context Protocol agent, you can attach it directly using the Stdio entrypoint:
+*Alternatively, you can clone this repo and use the `denoiser.bat` wrapper if you prefer running it directly from the Python source!*
 
-First, install dependencies:
+---
+
+## 🛠️ Usage (Standalone CLI)
+
+Using DeNoiser is incredibly simple. Just prefix any noisy command with `denoiser`.
+
+**Example 1: Package Managers**
 ```bash
-uv pip install -r requirements.txt
+denoiser npm install react
+```
+*(DeNoiser will drop the hundreds of lines of `npm WARN` and `added X packages` lines, returning only critical failures if they occur).*
+
+**Example 2: Testing Frameworks**
+```bash
+denoiser pytest tests/
+```
+*(DeNoiser strips all the `test_xyz... ok` lines. If a test fails, it extracts ONLY the traceback!)*
+
+---
+
+## 🔌 Usage (MCP Server)
+
+If you want to plug DeNoiser directly into an agent that supports the **Model Context Protocol (MCP)**, you can attach it as a server to expose the native `filter_command_output` tool to the LLM.
+
+First, install the required dependencies using `uv` or `pip`:
+```bash
+pip install -r requirements.txt
 ```
 
-Then configure your agent:
+Then configure your agent (e.g., in Claude Desktop's `claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
     "denoiser": {
-      "command": "uv",
-      "args": ["run", "mcp_server.py"],
-      "cwd": "/path/to/denoiser-repo"
+      "command": "python",
+      "args": ["mcp_server.py"],
+      "cwd": "/path/to/DeNoiser"
     }
   }
 }
 ```
 
-This exposes the `filter_command_output` tool to your agent, allowing it to autonomously filter terminal output.
+This grants the AI agent the autonomous ability to run the DeNoiser filtering algorithm on any text block it wants to compress!
 
 ---
 *Confidential Repository. Property of JWEB0689.*
