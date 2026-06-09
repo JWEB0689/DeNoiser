@@ -2,7 +2,14 @@ import json
 import re
 import os
 
-RULES_PATH = os.path.join(os.path.dirname(__file__), 'rules.json')
+import sys
+
+if getattr(sys, 'frozen', False):
+    base_path = os.path.join(sys._MEIPASS, 'filters')
+else:
+    base_path = os.path.dirname(__file__)
+
+RULES_PATH = os.path.join(base_path, 'rules.json')
 
 class FilterEngine:
     def __init__(self):
@@ -22,7 +29,7 @@ class FilterEngine:
                         "action": group.get("action", "drop")
                     })
         except Exception as e:
-            print(f"[RTK Engine] Error loading rules.json: {e}")
+            print(f"[DeNoiser] Error loading rules.json: {e}")
 
     def filter_output(self, raw_text: str) -> str:
         """
@@ -52,7 +59,7 @@ class FilterEngine:
                 
         # If we caught mistakes, return ONLY the isolated mistakes to maximize token savings.
         if error_lines:
-            error_lines.append(f"\n[RTK Engine] Isolated {len(error_lines)} error/mistake lines. All other output was dropped.")
+            error_lines.append(f"\n[DeNoiser] Isolated {len(error_lines)} error/mistake lines. All other output was dropped.")
             return "\n".join(error_lines)
             
         # 2. Normal Noise Stripping ('drop' rules)
@@ -76,7 +83,7 @@ class FilterEngine:
                 filtered_lines.append(line)
                 
         if dropped_count > 0:
-            filtered_lines.append(f"\n[RTK Engine] Filtered {dropped_count} noisy lines from output.")
+            filtered_lines.append(f"\n[DeNoiser] Filtered {dropped_count} noisy lines from output.")
             
         return "\n".join(filtered_lines)
 

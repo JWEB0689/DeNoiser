@@ -4,8 +4,8 @@ from filters.engine import engine
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: rtk <command> [args...]")
-        print("Example: rtk git status")
+        print("Usage: denoiser <command> [args...]")
+        print("Example: denoiser git status")
         sys.exit(1)
         
     command = sys.argv[1:]
@@ -16,7 +16,7 @@ def main():
         result = subprocess.run(command, capture_output=True, text=True, check=False, shell=True)
         raw_output = result.stdout + (result.stderr if result.stderr else "")
         
-        # Pass the massive output bloat into the RTK Engine
+        # Pass the massive output bloat into the DeNoiser
         filtered_output = engine.filter_output(raw_output)
         
         # Print the beautifully optimized result back to the user
@@ -26,10 +26,10 @@ def main():
         sys.exit(result.returncode)
         
     except FileNotFoundError:
-        print(f"[RTK Engine] Error: Command '{command[0]}' not found.")
+        print(f"[DeNoiser] Error: Command '{command[0]}' not found.")
         sys.exit(127)
     except Exception as e:
-        print(f"[RTK Engine] Interceptor Error: {e}")
+        print(f"[DeNoiser] Interceptor Error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

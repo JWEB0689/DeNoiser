@@ -1,24 +1,31 @@
 <div align="center">
-  <h1>RTK Engine API</h1>
-  <p><strong>Proprietary Token Compression & Autonomous Bypass Server</strong></p>
-  <img src="https://img.shields.io/badge/Python-FastAPI-blue?style=for-the-badge" alt="Stack" />
-  <img src="https://img.shields.io/badge/Access-Private-rose?style=for-the-badge" alt="Private" />
+  <h1>DeNoiser (Python)</h1>
+  <p><strong>Universal Token Compression CLI & MCP Server</strong></p>
+  <img src="https://img.shields.io/badge/Python-CLI-blue?style=for-the-badge" alt="Stack" />
 </div>
 
 ---
 
 ## Overview
 
-The **RTK (Real-Time Knowledge) Engine** is a high-performance local Python backend built to service the [Agent Desktop](https://github.com/JWEB0689/Agent) application. 
+**DeNoiser** is a high-performance Python CLI and MCP Server that filters and compresses command outputs before they reach your LLM context window. 
 
-Its primary responsibility is to intercept massive conversational payloads from the Agent client, mathematically compress the token context window using sliding-window heuristics, and proxy the optimized payload to LLM providers. This prevents token explosion in long-running autonomous sessions.
+Instead of blindly sending thousands of lines of terminal noise to an LLM, DeNoiser applies heuristic filters to:
+1. Strip out verbose logs, success messages, and boilerplate.
+2. Isolate mistakes and errors.
+3. Massively reduce token consumption for long-running autonomous sessions.
 
 ## ⚙️ How It Works
 
-Instead of blindly sending thousands of system prompts and chat history items to an LLM, the Agent client dispatches the raw JSON to this engine. The engine applies:
-1. **System Prompt Preservation:** Ensuring core directives are never dropped.
-2. **Dynamic Sliding Windows:** Truncating conversational history based on the user-defined `compressionRatio`.
-3. **Autonomous Bypass:** Rerouting specific payloads to alternative models without exposing secret API keys to the frontend client.
+You can use the `denoiser` wrapper in front of any command.
+```
+  Without denoiser:                               With denoiser:
+
+  LLM Agent  --git status-->  git                 LLM Agent  --git status-->  DeNoiser  -->  git
+                                |                                                       |          |
+          ~2,000 tokens (raw)   |                            ~200 tokens        | filter   |
+  <-----------------------------+                 <------------- (filtered) ----+----------+
+```
 
 ## 🚀 Setup & Execution
 
@@ -26,91 +33,37 @@ Instead of blindly sending thousands of system prompts and chat history items to
 - Python 3.10+
 - `uv` (Fast Python Package Manager)
 
-### 1. HTTP Server (For Agent Desktop)
-Runs the standard HTTP REST API on port `4000`.
-```bash
-# Install dependencies
-uv pip install -r requirements.txt
+### 1. Standalone Global CLI (Windows)
+You can use the engine locally in your own terminal to wrap any noisy command!
+1. Open your Windows Start Menu and search for **"Environment Variables"**.
+2. Edit the **PATH** variable.
+3. Add the absolute path to this folder.
+4. Restart your terminal.
 
-# Run the server
-uv run uvicorn main:app --host 0.0.0.0 --port 4000 --reload
-```
+You can now prefix any massive command with `denoiser` (e.g., `denoiser npm install` or `denoiser git status`) from anywhere on your PC, and it will instantly filter the noise and print beautifully optimized output back to your screen!
 
 ### 2. Universal MCP Server
-If you want to plug the RTK Engine into **Claude Desktop**, **Cursor**, or any other Model Context Protocol agent, you can attach it directly using the Stdio entrypoint:
+If you want to plug DeNoiser into **Claude Desktop**, **Cursor**, **Antigravity**, or any other Model Context Protocol agent, you can attach it directly using the Stdio entrypoint:
+
+First, install dependencies:
+```bash
+uv pip install -r requirements.txt
+```
+
+Then configure your agent:
 ```json
 {
   "mcpServers": {
-    "rtk-engine": {
+    "denoiser": {
       "command": "uv",
       "args": ["run", "mcp_server.py"],
-      "cwd": "/path/to/rtk-engine"
+      "cwd": "/path/to/denoiser-repo"
     }
   }
 }
 ```
 
-### 3. Docker (Cloud API Deployment)
-To host the RTK Engine on the cloud (Render, AWS, Heroku) so any agent on the internet can reach it:
-```bash
-docker build -t rtk-engine .
-docker run -p 4000:4000 rtk-engine
-```
-
-### 4. Standalone Global CLI (Windows)
-You can use the engine exactly like the original Rust tool locally in your own terminal without running any servers!
-1. Open your Windows Start Menu and search for **"Environment Variables"**.
-2. Edit the **PATH** variable.
-3. Add the absolute path to this folder (e.g., `C:\Users\Jwebe\Documents\rtk-engine`).
-4. Restart your terminal.
-You can now prefix any massive command with `rtk` (e.g., `rtk npm install` or `rtk git status`) from anywhere on your PC, and it will instantly filter the noise and print beautifully optimized output back to your screen!
-
-## 📡 API Reference
-
-### `POST /api/compress`
-Compresses a chat timeline into an optimized payload.
-
-**Request Body:**
-```json
-{
-  "messages": [
-    { "role": "system", "content": "..." },
-    { "role": "user", "content": "..." }
-  ],
-  "rtkConfig": {
-    "enabled": true,
-    "compressionRatio": 0.8,
-    "slidingWindowSize": 4000
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "compressedMessages": [...],
-  "stats": {
-    "originalLength": 50,
-    "compressedLength": 40,
-    "compressionRatio": 0.8,
-    "slidingWindowSize": 4000
-  }
-}
-```
-
-### `POST /api/proxy`
-Securely proxies an LLM generation request.
-
-**Request Body:**
-```json
-{
-  "payload": "...",
-  "rtkConfig": {
-    "dynamicBypass": true,
-    "modelRoute": "claude-3-5-sonnet"
-  }
-}
-```
+This exposes the `filter_command_output` tool to your agent, allowing it to autonomously filter terminal output.
 
 ---
 *Confidential Repository. Property of JWEB0689.*
