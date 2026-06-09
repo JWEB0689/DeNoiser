@@ -16,8 +16,9 @@ def main():
         result = subprocess.run(command, capture_output=True, text=True, check=False, shell=True)
         raw_output = result.stdout + (result.stderr if result.stderr else "")
         
+        command_str = " ".join(command)
         # Pass the massive output bloat into the DeNoiser
-        filtered_output = engine.filter_output(raw_output)
+        filtered_output = engine.filter_output(command_str, raw_output)
         
         # Print the beautifully optimized result back to the user
         print(filtered_output)

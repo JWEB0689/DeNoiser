@@ -1,0 +1,46 @@
+[filters.npm]
+description = "Filter npm noise"
+match_command = "^npm\\b"
+strip_lines_matching = [
+  "^npm (WARN|info|notice).*",
+  "^\\s*added \\d+ packages.*",
+  "^\\s*audited \\d+ packages.*",
+  "^\\s*found \\d+ vulnerabilities.*",
+  "^\\s*up to date.*"
+]
+
+[filters.git]
+description = "Filter git output"
+match_command = "^git\\b"
+strip_lines_matching = [
+  "^(Enumerating objects|Counting objects|Compressing objects|Writing objects|Total):.*",
+  "^\\s*remote:.*",
+  "^\\s*Delta compression using up to.*"
+]
+
+[filters.pytest]
+description = "Filter pytest successes"
+match_command = "^pytest\\b"
+strip_lines_matching = [
+  "^test.*\\.\\.\\. ok$",
+  "^\\s*PASS\\s+.*",
+  "^\\s*✓\\s+.*"
+]
+
+[filters.docker]
+description = "Filter docker build noise"
+match_command = "^docker\\b"
+strip_lines_matching = [
+  "^\\s*--->.*",
+  "^Step \\d+/\\d+\\s*:.*"
+]
+
+[filters.fallback]
+description = "Fallback error catching"
+match_command = ".*"
+keep_lines_matching = [
+  "^(Error|Exception|Traceback|FATAL|ERR!|FAILED|CRITICAL).*",
+  "(?i).*error:.*",
+  "^\\s*at \\S+\\s+\\(.*\\)",
+  "^\\s*File \".*\", line \\d+.*"
+]

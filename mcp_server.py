@@ -17,7 +17,7 @@ def filter_command_output(command: str, raw_output: str) -> str:
     """
     from filters.engine import engine
     try:
-        filtered = engine.filter_output(raw_output)
+        filtered = engine.filter_output(command, raw_output)
         return json.dumps({
             "status": "success",
             "original_chars": len(raw_output),
