@@ -23,7 +23,7 @@ def main():
     
     # Native Meta-Command Interception
     if command[0] == "version":
-        print(f"DeNoiser {VERSION}")
+        print("DeNoiser v1.3.1")
         sys.exit(0)
     elif command[0] == "list":
         print(f"--- Loaded DeNoiser Filters ({len(engine.filters)}) ---")
