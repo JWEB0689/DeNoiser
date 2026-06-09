@@ -29,11 +29,11 @@ jobs:
 
     - name: Build with PyInstaller (Windows)
       if: matrix.os == 'windows-latest'
-      run: pyinstaller --onefile --name denoiser --add-data "filters/rules.json;filters" cli.py
+      run: pyinstaller --onefile --name denoiser --add-data "filters/builtin.toml;filters" cli.py
 
     - name: Build with PyInstaller (Unix)
       if: matrix.os != 'windows-latest'
-      run: pyinstaller --onefile --name denoiser --add-data "filters/rules.json:filters" cli.py
+      run: pyinstaller --onefile --name denoiser --add-data "filters/builtin.toml:filters" cli.py
 
     - name: Rename binary for platform
       shell: bash
