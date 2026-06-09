@@ -10,6 +10,8 @@ def print_usage():
     print("  denoiser version   : Show the current version.")
     print("  denoiser list      : List all loaded TOML filter rules.")
     print("  denoiser test      : Run a built-in diagnostic test to verify filtering.")
+    print("  denoiser discover  : Scan local AI agent transcripts to find unfiltered noisy commands.")
+    print("  denoiser hook      : Generate and install shell wrappers to automatically intercept AI commands.")
     print("\nExample: denoiser git status")
 
 def main():
@@ -42,6 +44,20 @@ def main():
         print("\n--- FILTERED OUTPUT (What LLM actually sees) ---")
         filtered = engine.filter_output(fake_command, fake_output)
         print(filtered)
+        sys.exit(0)
+    elif command[0] == "discover":
+        try:
+            from discover import run_discover
+            run_discover()
+        except ImportError:
+            print("[DeNoiser] Error: discover module not found.")
+        sys.exit(0)
+    elif command[0] == "hook":
+        try:
+            from hook import run_hook
+            run_hook()
+        except ImportError:
+            print("[DeNoiser] Error: hook module not found.")
         sys.exit(0)
     
     try:
