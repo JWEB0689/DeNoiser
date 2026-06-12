@@ -17,14 +17,14 @@ def extract_antigravity_commands() -> List[str]:
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 for line in f:
-                    if '"default_api:run_command"' in line:
+                    if '"run_command"' in line:
                         try:
                             data = json.loads(line)
                             tool_calls = data.get("tool_calls", [])
                             if tool_calls is None:
                                 continue
                             for call in tool_calls:
-                                if call.get("name") == "default_api:run_command":
+                                if call.get("name") == "run_command":
                                     args = call.get("args", {})
                                     cmd = args.get("CommandLine")
                                     if cmd:
