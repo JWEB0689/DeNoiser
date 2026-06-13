@@ -2,7 +2,7 @@ import sys
 import subprocess
 from filters.engine import engine
 
-VERSION = "v1.1.0"
+VERSION = "v1.3.3"
 
 def print_usage():
     print("Usage: denoiser <command> [args...]")
@@ -23,7 +23,7 @@ def main():
     
     # Native Meta-Command Interception
     if command[0] == "version":
-        print("DeNoiser v1.3.1")
+        print(f"DeNoiser {VERSION}")
         sys.exit(0)
     elif command[0] == "list":
         print(f"--- Loaded DeNoiser Filters ({len(engine.filters)}) ---")
