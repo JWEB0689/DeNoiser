@@ -28,6 +28,9 @@ def extract_antigravity_commands() -> List[str]:
                                     args = call.get("args", {})
                                     cmd = args.get("CommandLine")
                                     if cmd:
+                                        # Antigravity IDE stores args as JSON-encoded
+                                        # strings with extra wrapping quotes — strip them
+                                        cmd = cmd.strip('"')
                                         commands.append(cmd)
                         except json.JSONDecodeError:
                             continue
