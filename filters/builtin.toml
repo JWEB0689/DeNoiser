@@ -35,6 +35,110 @@ strip_lines_matching = [
   "^Step \\d+/\\d+\\s*:.*"
 ]
 
+[filters.pip]
+description = "Filter pip install noise"
+match_command = "^pip\\b|^pip3\\b"
+strip_lines_matching = [
+  "^Collecting .*",
+  "^  Downloading .*",
+  "^  Using cached .*",
+  "^Building wheels.*",
+  "^  Building wheel.*",
+  "^  Created wheel.*",
+  "^Stored in directory.*",
+  "^\\s*━+.*",
+  "^\\[notice\\].*",
+  "^DEPRECATION:.*",
+  "^WARNING: pip.*"
+]
+match_output = [
+  { pattern = "Successfully installed", message = "[DeNoiser] pip: Packages installed successfully." },
+  { pattern = "already satisfied", message = "[DeNoiser] pip: All packages already satisfied." }
+]
+
+[filters.winget]
+description = "Filter winget install noise"
+match_command = "^winget\\b"
+strip_lines_matching = [
+  "^\\s*[█▒]+.*",
+  "^\\s*[-\\\\|/]\\s*$",
+  "^This application is licensed.*",
+  "^Microsoft is not responsible.*",
+  "^Downloading https?://.*",
+  "^Successfully verified installer hash.*",
+  "^Starting package install.*"
+]
+match_output = [
+  { pattern = "Successfully installed", message = "[DeNoiser] winget: Package installed successfully." },
+  { pattern = "No applicable upgrade", message = "[DeNoiser] winget: Already up to date." },
+  { pattern = "No available upgrade", message = "[DeNoiser] winget: Already up to date." }
+]
+
+[filters.gh]
+description = "Filter GitHub CLI noise"
+match_command = "^gh\\b"
+strip_lines_matching = [
+  "^\\s*✓.*",
+  "^\\s*•.*",
+  "^\\s*-\\s.*"
+]
+on_empty = "[DeNoiser] gh: Command completed."
+
+[filters.python]
+description = "Filter python runner noise"
+match_command = "^python\\b|^python3\\b|^py\\b"
+strip_lines_matching = [
+  "^\\s*$"
+]
+
+[filters.cargo]
+description = "Filter Rust cargo build noise"
+match_command = "^cargo\\b"
+strip_lines_matching = [
+  "^\\s*Compiling .*",
+  "^\\s*Downloading .*",
+  "^\\s*Downloaded .*",
+  "^\\s*Updating .*",
+  "^\\s*Locking .*",
+  "^\\s*Checking .*",
+  "^\\s*Finished .*"
+]
+match_output = [
+  { pattern = "^error\\[E", message = "[DeNoiser] Cargo build FAILED. Check error above." }
+]
+on_empty = "[DeNoiser] cargo: Build completed successfully."
+
+[filters.yarn]
+description = "Filter yarn package manager noise"
+match_command = "^yarn\\b"
+strip_lines_matching = [
+  "^yarn (info|warn|notice|verbose).*",
+  "^\\s*\\[\\d+/\\d+\\].*",
+  "^Done in [0-9.]+s.*",
+  "^success.*"
+]
+on_empty = "[DeNoiser] yarn: Command completed successfully."
+
+[filters.pnpm]
+description = "Filter pnpm package manager noise"
+match_command = "^pnpm\\b"
+strip_lines_matching = [
+  "^\\s*WARN.*",
+  "^Progress.*\\[.*\\].*",
+  "^Packages are hard linked.*",
+  "^Already up to date.*"
+]
+on_empty = "[DeNoiser] pnpm: Command completed successfully."
+
+[filters.powershell]
+description = "Filter PowerShell API calls and chained commands"
+match_command = "Invoke-RestMethod|Invoke-WebRequest|\\$headers\\s*=|\\$env:PATH"
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*[-\\\\|/]\\s*$"
+]
+on_empty = "[DeNoiser] PowerShell: Command completed."
+
 [filters.fallback]
 description = "Fallback error catching"
 match_command = ".*"
