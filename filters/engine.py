@@ -46,6 +46,7 @@ class FilterEngine:
                         
                 self.filters.append({
                     "id": filter_id,
+                    "description": config.get("description", ""),
                     "match_command": compiled_match,
                     "strip_ansi": config.get("strip_ansi", False),
                     "strip_lines_matching": strip_lines,
@@ -66,7 +67,18 @@ class FilterEngine:
 
     def filter_output(self, command: str, raw_text: str) -> str:
         """
-        Executes the 8-stage RTK TOML filtering pipeline.
+        Executes the multi-stage TOML filtering pipeline.
+        
+        Stages:
+        1. Match Command — find the first filter whose regex matches the command
+        2. Strip ANSI — remove terminal escape codes if configured
+        3. Replace — apply regex substitution rules
+        4. Match Output — short-circuit with a message if a pattern matches
+        5. Strip / Keep Lines — remove noise or isolate signal
+        6. Truncate — trim overly long lines
+        7. Tail — keep only the last N lines
+        8. Max lines — keep only the first N lines
+        9. On Empty — return a fallback message if everything was filtered
         """
         if not raw_text:
             return ""
@@ -79,7 +91,7 @@ class FilterEngine:
                 break
                 
         if not active_filter:
-            return raw_text # Pass through if no filter matches
+            return raw_text  # Pass through if no filter matches
             
         # 2. Strip ANSI
         if active_filter["strip_ansi"]:
@@ -158,6 +170,9 @@ class FilterEngine:
             filtered_lines.append(f"\n[DeNoiser] {action_str} using '{active_filter['id']}' filter.")
             
         return "\n".join(filtered_lines)
+    
+    def __repr__(self):
+        return f"FilterEngine(filters={len(self.filters)})"
 
 # Singleton instance
 engine = FilterEngine()

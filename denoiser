@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""
+DeNoiser — Universal Token Compression CLI for LLM Agents
+Unix executable wrapper. Add this directory to your PATH.
+"""
+import os
+import sys
+
+# Ensure imports resolve relative to this script's actual location,
+# even when invoked via a symlink from PATH.
+script_dir = os.path.dirname(os.path.realpath(__file__))
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
+
+from cli import main
+
+if __name__ == "__main__":
+    main()
