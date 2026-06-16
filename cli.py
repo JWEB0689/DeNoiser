@@ -2,7 +2,7 @@ import sys
 import subprocess
 from filters.engine import engine
 
-VERSION = "v1.4.2"
+VERSION = "v1.4.3"
 
 def print_usage():
     print("Usage: denoiser <command> [args...]")
