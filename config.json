@@ -1,0 +1,18 @@
+{
+  "id": "ws_d32f32f9",
+  "name": "DeNoiser",
+  "slug": "denoiser",
+  "defaults": {
+    "permissionMode": "safe",
+    "cyclablePermissionModes": [
+      "safe",
+      "allow-all"
+    ],
+    "enabledSourceSlugs": []
+  },
+  "localMcpServers": {
+    "enabled": true
+  },
+  "createdAt": 1781647188888,
+  "updatedAt": 1781647188890
+}
