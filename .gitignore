@@ -6,3 +6,10 @@ build/
 dist/
 *.spec
 *.pyc
+.claude-plugin/
+config.json
+events.jsonl
+labels/
+sessions/
+statuses/
+views.json
