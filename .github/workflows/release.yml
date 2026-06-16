@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
 
     steps:
     - uses: actions/checkout@v4
@@ -45,7 +45,12 @@ jobs:
         if [ "$RUNNER_OS" == "Windows" ]; then
           mv denoiser.exe denoiser-windows.exe
         elif [ "$RUNNER_OS" == "macOS" ]; then
-          mv denoiser denoiser-macos
+          ARCH=$(uname -m)
+          if [ "$ARCH" == "x86_64" ]; then
+            mv denoiser denoiser-macos-intel
+          else
+            mv denoiser denoiser-macos
+          fi
         else
           mv denoiser denoiser-linux
         fi
