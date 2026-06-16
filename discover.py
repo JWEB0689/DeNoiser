@@ -2,6 +2,7 @@ import os
 import glob
 import json
 import re
+import shlex
 from collections import Counter
 from typing import List
 
@@ -74,16 +75,25 @@ def split_chained_commands(cmd: str) -> List[str]:
     Handles: && , || , ; , and | (pipe) separators.
     For pipes, extracts each command in the pipeline individually.
     """
-    # Split on && , || , ;
-    parts = re.split(r'\s*(?:&&|\|\||;)\s*', cmd)
-    
+    try:
+        tokens = shlex.split(cmd)
+    except Exception:
+        # Fallback for unbalanced quotes
+        parts = re.split(r'\s*(?:&&|\|\||;|\|)\s*', cmd)
+        return [p.strip() for p in parts if p.strip()]
+        
     individual = []
-    for part in parts:
-        # Further split on pipes to get individual pipeline stages
-        pipe_parts = re.split(r'\s*\|\s*', part)
-        individual.extend(pipe_parts)
-    
-    return [p.strip() for p in individual if p.strip()]
+    current = []
+    for token in tokens:
+        if token in ("&&", "||", ";", "|"):
+            if current:
+                individual.append(" ".join(current))
+                current = []
+        else:
+            current.append(token)
+    if current:
+        individual.append(" ".join(current))
+    return individual
 
 def simplify_command(cmd: str) -> str:
     """Extracts the base executable name from a command string.
@@ -105,13 +115,17 @@ def simplify_command(cmd: str) -> str:
     parts = cmd.split()
     
     if not parts:
-        return "unknown"
+        return ""
         
     base = parts[0]
     
     # Strip path prefixes (e.g., /usr/bin/git -> git, ./gradlew -> gradlew)
     base = os.path.basename(base)
     
+    # Ignore invalid executable names that might be parsing artifacts
+    if not re.match(r'^[a-zA-Z0-9_.-]+$', base):
+        return ""
+        
     return base
 
 def run_discover():
@@ -138,6 +152,9 @@ def run_discover():
         for cmd in individual_cmds:
             base_cmd = simplify_command(cmd)
             
+            if not base_cmd:
+                continue
+                
             matched = False
             for f in engine.filters:
                 # Skip fallback — we want to know explicit tool coverage
