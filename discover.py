@@ -69,6 +69,83 @@ def extract_claude_commands() -> List[str]:
                     pass
     return commands
 
+def extract_hermes_commands() -> List[str]:
+    home = os.path.expanduser("~")
+    sessions_dir = os.path.join(home, "AppData", "Local", "Hermes", "sessions")
+    if os.name != 'nt':
+        sessions_dir = os.path.join(home, ".config", "hermes", "sessions")
+        
+    commands = []
+    if not os.path.exists(sessions_dir):
+        return commands
+        
+    for root, _, files in os.walk(sessions_dir):
+        for file in files:
+            if file.endswith(".json") or file.endswith(".jsonl"):
+                filepath = os.path.join(root, file)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        matches = re.findall(r'"(?:command|CommandLine|cmd)"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"', content)
+                        for m in matches:
+                            cmd = m.encode('utf-8').decode('unicode_escape')
+                            commands.append(cmd)
+                except Exception:
+                    pass
+    return commands
+
+def extract_openclaw_commands() -> List[str]:
+    home = os.path.expanduser("~")
+    openclaw_dir = os.path.join(home, ".openclaw")
+    commands = []
+    if not os.path.exists(openclaw_dir):
+        return commands
+        
+    for root, _, files in os.walk(openclaw_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            try:
+                if file.endswith(".sqlite") or file.endswith(".db"):
+                    with open(filepath, 'rb') as f:
+                        content = f.read().decode('utf-8', errors='ignore')
+                        matches = re.findall(r'"(?:command|CommandLine|cmd)"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"', content)
+                        for m in matches:
+                            cmd = m.encode('utf-8').decode('unicode_escape')
+                            commands.append(cmd)
+                elif file.endswith(".json") or file.endswith(".jsonl"):
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        matches = re.findall(r'"(?:command|CommandLine|cmd)"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"', content)
+                        for m in matches:
+                            cmd = m.encode('utf-8').decode('unicode_escape')
+                            commands.append(cmd)
+            except Exception:
+                pass
+    return commands
+
+def extract_craft_agents_commands() -> List[str]:
+    home = os.path.expanduser("~")
+    craft_dir = os.path.join(home, ".craft-agent")
+    commands = []
+    if not os.path.exists(craft_dir):
+        return commands
+        
+    for root, _, files in os.walk(craft_dir):
+        for file in files:
+            if file.endswith(".json") or file.endswith(".jsonl"):
+                filepath = os.path.join(root, file)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            if '"command"' in line or '"CommandLine"' in line or '"cmd"' in line:
+                                matches = re.findall(r'"(?:command|CommandLine|cmd)"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"', line)
+                                for m in matches:
+                                    cmd = m.encode('utf-8').decode('unicode_escape')
+                                    commands.append(cmd)
+                except Exception:
+                    pass
+    return commands
+
 def split_chained_commands(cmd: str) -> List[str]:
     """Split a chained command string into individual commands.
     
@@ -132,10 +209,16 @@ def run_discover():
     print("Discovering local AI agent transcripts...")
     ag_cmds = extract_antigravity_commands()
     claude_cmds = extract_claude_commands()
+    hermes_cmds = extract_hermes_commands()
+    openclaw_cmds = extract_openclaw_commands()
+    craft_cmds = extract_craft_agents_commands()
     
-    all_cmds = ag_cmds + claude_cmds
+    all_cmds = ag_cmds + claude_cmds + hermes_cmds + openclaw_cmds + craft_cmds
     print(f"Found {len(ag_cmds)} commands from Antigravity IDE")
     print(f"Found {len(claude_cmds)} commands from Claude Code")
+    print(f"Found {len(hermes_cmds)} commands from Hermes")
+    print(f"Found {len(openclaw_cmds)} commands from OpenClaw")
+    print(f"Found {len(craft_cmds)} commands from Craft Agents")
     print("-" * 50)
     
     if not all_cmds:

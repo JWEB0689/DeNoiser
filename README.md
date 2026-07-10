@@ -72,7 +72,7 @@ DeNoiser includes several built-in commands to help you diagnose and verify your
 - `denoiser version`: Display the current version.
 - `denoiser list`: List all currently loaded TOML filter rules (from `builtin.toml`).
 - `denoiser test`: Run a built-in diagnostic test. This artificially generates noisy terminal output and immediately filters it, allowing you to visually verify the engine is working on your machine.
-- `denoiser discover`: Scans your local machine for past AI agent sessions (Claude Code and Antigravity IDE) to extract past commands, calculate token coverage, and highlight which tools are frequently used but missing filters!
+- `denoiser discover`: Scans your local machine for past AI agent sessions (Claude Code, Antigravity IDE, Hermes, OpenClaw, and Craft Agents) to extract past commands, calculate token coverage, and highlight which tools are frequently used but missing filters!
 - **`denoiser hook`**: Dynamically generates and installs cross-platform shell wrappers into your bash or PowerShell profile. Once installed, any AI (or human) running a command like `npm install` in the terminal will implicitly execute `denoiser npm install` behind the scenes!
 
 ---
