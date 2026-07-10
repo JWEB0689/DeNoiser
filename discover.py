@@ -2,6 +2,7 @@ import os
 import glob
 import json
 import re
+import shlex
 from collections import Counter
 from typing import List
 
@@ -17,17 +18,18 @@ def extract_antigravity_commands() -> List[str]:
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 for line in f:
-                    if '"default_api:run_command"' in line:
+                    if '"run_command"' in line:
                         try:
                             data = json.loads(line)
                             tool_calls = data.get("tool_calls", [])
                             if tool_calls is None:
                                 continue
                             for call in tool_calls:
-                                if call.get("name") == "default_api:run_command":
+                                if call.get("name") == "run_command":
                                     args = call.get("args", {})
                                     cmd = args.get("CommandLine")
                                     if cmd:
+                                        cmd = cmd.strip('"')
                                         commands.append(cmd)
                         except json.JSONDecodeError:
                             continue
@@ -67,20 +69,62 @@ def extract_claude_commands() -> List[str]:
                     pass
     return commands
 
+def split_chained_commands(cmd: str) -> List[str]:
+    """Split a chained command string into individual commands.
+    
+    Handles: && , || , ; , and | (pipe) separators.
+    For pipes, extracts each command in the pipeline individually.
+    """
+    try:
+        tokens = shlex.split(cmd)
+    except Exception:
+        # Fallback for unbalanced quotes
+        parts = re.split(r'\s*(?:&&|\|\||;|\|)\s*', cmd)
+        return [p.strip() for p in parts if p.strip()]
+        
+    individual = []
+    current = []
+    for token in tokens:
+        if token in ("&&", "||", ";", "|"):
+            if current:
+                individual.append(" ".join(current))
+                current = []
+        else:
+            current.append(token)
+    if current:
+        individual.append(" ".join(current))
+    return individual
+
 def simplify_command(cmd: str) -> str:
-    """Extracts the base executable name (e.g. 'git commit -m' -> 'git')"""
-    cmd = re.sub(r'^[A-Z_]+=[^\s]+\s+', '', cmd.strip())
-    cmd = cmd.replace("sudo ", "")
+    """Extracts the base executable name from a command string.
+    
+    Strips environment variable prefixes, sudo, and resolves
+    the first real command token.
+    """
+    cmd = cmd.strip()
+    
+    # Strip leading env var assignments (e.g., FOO=bar command)
+    cmd = re.sub(r'^(?:[A-Z_]+=[^\s]+\s+)+', '', cmd)
+    
+    # Strip sudo
+    cmd = re.sub(r'^sudo\s+', '', cmd)
+    
+    # Strip cd ... && prefix (very common in agent commands)
+    cmd = re.sub(r'^cd\s+[^\s;&]+\s*(?:&&\s*)?', '', cmd)
+    
     parts = cmd.split()
     
     if not parts:
-        return "unknown"
+        return ""
         
     base = parts[0]
     
-    # Check for chained commands
-    if "&&" in cmd or "|" in cmd or ";" in cmd:
-        return "chained_commands (complex)"
+    # Strip path prefixes (e.g., /usr/bin/git -> git, ./gradlew -> gradlew)
+    base = os.path.basename(base)
+    
+    # Ignore invalid executable names that might be parsing artifacts
+    if not re.match(r'^[a-zA-Z0-9_.-]+$', base):
+        return ""
         
     return base
 
@@ -101,33 +145,41 @@ def run_discover():
     filtered_count = 0
     unfiltered_counts = Counter()
     
-    for cmd in all_cmds:
-        matched = False
-        for f in engine.filters:
-            # Prevent fallback rule from padding the stats, we want to know explicit tool coverage
-            if f["id"] == "fallback":
-                continue
-            if f["match_command"].search(cmd):
-                matched = True
-                break
-                
-        if matched:
-            filtered_count += 1
-        else:
+    for raw_cmd in all_cmds:
+        # Split chained commands so each part is evaluated independently
+        individual_cmds = split_chained_commands(raw_cmd)
+        
+        for cmd in individual_cmds:
             base_cmd = simplify_command(cmd)
-            unfiltered_counts[base_cmd] += 1
             
-    total = len(all_cmds)
-    coverage = (filtered_count / total) * 100 if total > 0 else 0
+            if not base_cmd:
+                continue
+                
+            matched = False
+            for f in engine.filters:
+                # Skip fallback — we want to know explicit tool coverage
+                if f["id"] == "fallback":
+                    continue
+                if f["match_command"].search(cmd) or f["match_command"].search(base_cmd):
+                    matched = True
+                    break
+                    
+            if matched:
+                filtered_count += 1
+            else:
+                unfiltered_counts[base_cmd] += 1
+            
+    total_individual = filtered_count + sum(unfiltered_counts.values())
+    coverage = (filtered_count / total_individual) * 100 if total_individual > 0 else 0
     
-    print(f"Total Commands Executed: {total}")
+    print(f"Total Commands Analyzed: {total_individual} (from {len(all_cmds)} raw entries)")
     print(f"Commands Protected by DeNoiser: {filtered_count} ({coverage:.1f}% Coverage)\n")
     
-    print("Top 5 Unfiltered Targets (Write TOML rules for these!):")
+    print("Top 10 Unfiltered Targets (Write TOML rules for these!):")
     if not unfiltered_counts:
         print("Amazing! 100% of your commands are explicitly covered by DeNoiser filters!")
     else:
-        for cmd, count in unfiltered_counts.most_common(5):
+        for cmd, count in unfiltered_counts.most_common(10):
             print(f"  - `{cmd}` ({count} times)")
             
     print("-" * 50)

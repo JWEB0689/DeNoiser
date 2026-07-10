@@ -1,12 +1,32 @@
+# ─────────────────────────────────────────────────
+# DeNoiser Built-in Filter Rules
+# Each filter matches a command pattern and defines
+# noise-reduction rules for that command's output.
+# ─────────────────────────────────────────────────
+
 [filters.npm]
 description = "Filter npm noise"
 match_command = "^npm\\b"
+strip_ansi = true
 strip_lines_matching = [
-  "^npm (WARN|info|notice).*",
+  "^npm (WARN|info|notice|verb|http|timing).*",
   "^\\s*added \\d+ packages.*",
+  "^\\s*removed \\d+ packages.*",
+  "^\\s*changed \\d+ packages.*",
   "^\\s*audited \\d+ packages.*",
   "^\\s*found \\d+ vulnerabilities.*",
-  "^\\s*up to date.*"
+  "^\\s*up to date.*",
+  "^\\s*$"
+]
+
+[filters.npx]
+description = "Filter npx runner noise"
+match_command = "^npx\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^npm (WARN|info|notice).*",
+  "^Need to install the following packages.*",
+  "^\\s*$"
 ]
 
 [filters.git]
@@ -15,16 +35,37 @@ match_command = "^git\\b"
 strip_lines_matching = [
   "^(Enumerating objects|Counting objects|Compressing objects|Writing objects|Total):.*",
   "^\\s*remote:.*",
-  "^\\s*Delta compression using up to.*"
+  "^\\s*Delta compression using up to.*",
+  "^\\s*$"
 ]
 
 [filters.pytest]
-description = "Filter pytest successes"
-match_command = "^pytest\\b"
+description = "Filter pytest successes, keep failures"
+match_command = "^pytest\\b|python.*-m\\s+pytest"
 strip_lines_matching = [
-  "^test.*\\.\\.\\. ok$",
+  "^\\s*tests?/.*PASSED\\s*$",
+  "^\\s*\\S+\\.py::\\S+\\s+PASSED\\s*$",
+  "^\\s*PASSED\\s+.*",
+  "^\\s*\\.+$",
+  "^platform .*--.*",
+  "^rootdir:.*",
+  "^configfile:.*",
+  "^plugins:.*",
+  "^cachedir:.*",
+  "^collected \\d+ items?\\s*$",
+  "^\\s*$"
+]
+
+[filters.jest]
+description = "Filter Jest test runner noise"
+match_command = "jest\\b|react-scripts\\s+test"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*✓\\s+.*",
+  "^\\s*✕\\s+.*",
   "^\\s*PASS\\s+.*",
-  "^\\s*✓\\s+.*"
+  "^\\s*console\\.log\\s*$",
+  "^\\s*$"
 ]
 
 [filters.docker]
@@ -32,15 +73,196 @@ description = "Filter docker build noise"
 match_command = "^docker\\b"
 strip_lines_matching = [
   "^\\s*--->.*",
-  "^Step \\d+/\\d+\\s*:.*"
+  "^Step \\d+/\\d+\\s*:.*",
+  "^\\s*Removing intermediate container.*",
+  "^\\s*Successfully tagged.*",
+  "^\\s*$"
 ]
 
+[filters.pip]
+description = "Filter pip install noise"
+match_command = "^pip\\b|^pip3\\b|python.*-m\\s+pip"
+strip_ansi = true
+strip_lines_matching = [
+  "^Collecting .*",
+  "^  Downloading .*",
+  "^  Using cached .*",
+  "^Building wheels.*",
+  "^  Building wheel.*",
+  "^  Created wheel.*",
+  "^Stored in directory.*",
+  "^\\s*━+.*",
+  "^\\[notice\\].*",
+  "^DEPRECATION:.*",
+  "^WARNING: pip.*",
+  "^Installing collected packages.*",
+  "^\\s*$"
+]
+match_output = [
+  { pattern = "Successfully installed", message = "[DeNoiser] pip: Packages installed successfully." },
+  { pattern = "already satisfied", message = "[DeNoiser] pip: All packages already satisfied." }
+]
+
+[filters.winget]
+description = "Filter winget install noise (Windows only)"
+match_command = "^winget\\b"
+strip_lines_matching = [
+  "^\\s*[█▒]+.*",
+  "^\\s*[-\\\\|/]\\s*$",
+  "^This application is licensed.*",
+  "^Microsoft is not responsible.*",
+  "^Downloading https?://.*",
+  "^Successfully verified installer hash.*",
+  "^Starting package install.*",
+  "^\\s*$"
+]
+match_output = [
+  { pattern = "Successfully installed", message = "[DeNoiser] winget: Package installed successfully." },
+  { pattern = "No applicable upgrade", message = "[DeNoiser] winget: Already up to date." },
+  { pattern = "No available upgrade", message = "[DeNoiser] winget: Already up to date." }
+]
+
+[filters.gh]
+description = "Filter GitHub CLI noise"
+match_command = "^gh\\b"
+strip_lines_matching = [
+  "^\\s*✓.*",
+  "^\\s*•.*",
+  "^\\s*-\\s.*"
+]
+on_empty = "[DeNoiser] gh: Command completed."
+
+[filters.python]
+description = "Filter python runner noise"
+match_command = "^python\\b|^python3\\b|^py\\b"
+strip_lines_matching = [
+  "^\\s*$"
+]
+
+[filters.cargo]
+description = "Filter Rust cargo build noise"
+match_command = "^cargo\\b"
+strip_lines_matching = [
+  "^\\s*Compiling .*",
+  "^\\s*Downloading .*",
+  "^\\s*Downloaded .*",
+  "^\\s*Updating .*",
+  "^\\s*Locking .*",
+  "^\\s*Checking .*",
+  "^\\s*Finished .*",
+  "^\\s*$"
+]
+match_output = [
+  { pattern = "^error\\[E", message = "[DeNoiser] Cargo build FAILED. Check error above." }
+]
+on_empty = "[DeNoiser] cargo: Build completed successfully."
+
+[filters.yarn]
+description = "Filter yarn package manager noise"
+match_command = "^yarn\\b"
+strip_lines_matching = [
+  "^yarn (info|warn|notice|verbose).*",
+  "^\\s*\\[\\d+/\\d+\\].*",
+  "^Done in [0-9.]+s.*",
+  "^success.*",
+  "^\\s*$"
+]
+on_empty = "[DeNoiser] yarn: Command completed successfully."
+
+[filters.pnpm]
+description = "Filter pnpm package manager noise"
+match_command = "^pnpm\\b"
+strip_lines_matching = [
+  "^\\s*WARN.*",
+  "^Progress.*\\[.*\\].*",
+  "^Packages are hard linked.*",
+  "^Already up to date.*",
+  "^\\s*$"
+]
+on_empty = "[DeNoiser] pnpm: Command completed successfully."
+
+[filters.make]
+description = "Filter make/cmake build noise"
+match_command = "^make\\b|^cmake\\b"
+strip_lines_matching = [
+  "^make\\[\\d+\\]: (Entering|Leaving) directory.*",
+  "^\\s*CC\\s+.*\\.o$",
+  "^\\s*CXX\\s+.*\\.o$",
+  "^\\s*AR\\s+.*",
+  "^\\s*LINK\\s+.*",
+  "^-- (Configuring|Generating|Build files).*",
+  "^\\s*$"
+]
+on_empty = "[DeNoiser] make: Build completed successfully."
+
+[filters.go]
+description = "Filter Go build/test noise"
+match_command = "^go\\b"
+strip_lines_matching = [
+  "^ok\\s+\\S+\\s+[0-9.]+s.*",
+  "^\\?\\s+\\S+\\s+\\[no test files\\].*",
+  "^\\s*$"
+]
+
+[filters.gradle]
+description = "Filter Gradle build noise"
+match_command = "^gradle\\b|^\\./gradlew\\b"
+strip_lines_matching = [
+  "^> Task :\\S+ UP-TO-DATE.*",
+  "^> Task :\\S+ NO-SOURCE.*",
+  "^Deprecated Gradle features.*",
+  "^\\s*$"
+]
+on_empty = "[DeNoiser] gradle: Build completed successfully."
+
+[filters.mvn]
+description = "Filter Maven build noise"
+match_command = "^mvn\\b|^\\./mvnw\\b"
+strip_lines_matching = [
+  "^\\[INFO\\] ---.*",
+  "^\\[INFO\\] Building \\S+.*",
+  "^\\[INFO\\] Downloading from.*",
+  "^\\[INFO\\] Downloaded from.*",
+  "^\\[INFO\\] \\s*$",
+  "^Downloading:.*",
+  "^Downloaded:.*",
+  "^Progress.*",
+  "^\\s*$"
+]
+
+[filters.brew]
+description = "Filter Homebrew noise"
+match_command = "^brew\\b"
+strip_lines_matching = [
+  "^==> (Downloading|Pouring|Cleaning up|Caveats).*",
+  "^####+.*",
+  "^Already downloaded.*",
+  "^\\s*$"
+]
+
+[filters.powershell]
+description = "Filter PowerShell API calls and chained commands (Windows only)"
+match_command = "Invoke-RestMethod|Invoke-WebRequest|\\$headers\\s*=|\\$env:PATH"
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*[-\\\\|/]\\s*$"
+]
+on_empty = "[DeNoiser] PowerShell: Command completed."
+
+# ─────────────────────────────────────────────────
+# Fallback: Catches any command not matched above.
+# Uses strip_lines_matching to remove common noise
+# while PRESERVING all meaningful output.
+# This is intentionally light — we only strip truly
+# universal noise patterns, not content.
+# ─────────────────────────────────────────────────
 [filters.fallback]
-description = "Fallback error catching"
+description = "Lightweight fallback — strips universal noise, preserves content"
 match_command = ".*"
-keep_lines_matching = [
-  "^(Error|Exception|Traceback|FATAL|ERR!|FAILED|CRITICAL).*",
-  "(?i).*error:.*",
-  "^\\s*at \\S+\\s+\\(.*\\)",
-  "^\\s*File \".*\", line \\d+.*"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*[-\\\\|/]\\s*$",
+  "^\\s*[█▒░]+.*",
+  "^\\s*\\d+%\\s*[\\|█▒░#=\\->]+.*"
 ]

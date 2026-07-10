@@ -5,13 +5,35 @@ on:
     tags:
       - 'v*'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -r requirements.txt
+      - name: Run Pytest
+        run: |
+          if [ -d "tests" ]; then pytest tests/; else echo "No tests directory found."; fi
+
   build:
+    needs: test
     name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: tenki-standard-medium-4c-8g
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-15-intel]
 
     steps:
     - uses: actions/checkout@v4
@@ -42,7 +64,12 @@ jobs:
         if [ "$RUNNER_OS" == "Windows" ]; then
           mv denoiser.exe denoiser-windows.exe
         elif [ "$RUNNER_OS" == "macOS" ]; then
-          mv denoiser denoiser-macos
+          ARCH=$(uname -m)
+          if [ "$ARCH" == "x86_64" ]; then
+            mv denoiser denoiser-macos-intel
+          else
+            mv denoiser denoiser-macos
+          fi
         else
           mv denoiser denoiser-linux
         fi
@@ -55,7 +82,9 @@ jobs:
 
   release:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: tenki-standard-medium-4c-8g
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v4
 
