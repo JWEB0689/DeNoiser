@@ -6,7 +6,7 @@ on:
 
 jobs:
   summary:
-    runs-on: tenki-standard-medium-4c-8g
+    runs-on: self-hosted
     permissions:
       issues: write
       models: read
