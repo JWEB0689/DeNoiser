@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -23,17 +24,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           pip install -r requirements.txt
-      - name: Run Pytest
+      - name: Run Tests & Diagnostics
         run: |
           if [ -d "tests" ]; then pytest tests/; else echo "No tests directory found."; fi
+          python cli.py test
 
   build:
     needs: test
     name: Build on ${{ matrix.os }}
-    runs-on: tenki-standard-medium-4c-8g
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-15-intel]
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
 
     steps:
     - uses: actions/checkout@v4
@@ -51,11 +53,11 @@ jobs:
 
     - name: Build with PyInstaller (Windows)
       if: matrix.os == 'windows-latest'
-      run: pyinstaller --onefile --name denoiser --add-data "filters/builtin.toml;filters" cli.py
+      run: pyinstaller --onefile --name denoiser --add-data "filters/builtin.toml;filters" --hidden-import discover --hidden-import hook cli.py
 
     - name: Build with PyInstaller (Unix)
       if: matrix.os != 'windows-latest'
-      run: pyinstaller --onefile --name denoiser --add-data "filters/builtin.toml:filters" cli.py
+      run: pyinstaller --onefile --name denoiser --add-data "filters/builtin.toml:filters" --hidden-import discover --hidden-import hook cli.py
 
     - name: Rename binary for platform
       shell: bash
@@ -82,7 +84,9 @@ jobs:
 
   release:
     needs: build
-    runs-on: tenki-standard-medium-4c-8g
+    name: Publish Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     steps:
@@ -98,5 +102,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: dist/*
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
