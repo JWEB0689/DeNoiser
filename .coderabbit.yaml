@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# DeNoiser CodeRabbit Configuration
+
+inheritance: true
+enable_free_tier: true
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+
+  path_filters:
+    - "!dist/**"
+    - "!build/**"
+    - "!__pycache__/**"
+    - "!*.spec"
+    - "!**/*.wav"
+    - "!**/*.mp3"
+    - "!**/*.flac"
+    - "!**/*.raw"
+    - "!**/*.bin"
+
+  path_instructions:
+    - path: "**/*.py"
+      instructions: "Review Python code for digital signal processing (DSP) correctness, NumPy audio buffer memory efficiency, PEP 8 conventions, clean CLI argument handling, and robust exception safety."
+    - path: "filters/**/*.py"
+      instructions: "Ensure audio filter algorithms maintain numerical stability, prevent clipping/overflow, and avoid unnecessary memory allocations inside real-time audio sample loops."
+
+  tools:
+    ruff:
+      enabled: true
+    markdownlint:
+      enabled: true
+    gitleaks:
+      enabled: true
+
+chat:
+  auto_reply: true
