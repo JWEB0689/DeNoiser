@@ -12,9 +12,17 @@ HOOK_END = "# --- DeNoiser Auto-Intercept Hooks End ---"
 WINDOWS_ONLY_FILTERS = {"winget", "powershell"}
 UNIX_ONLY_FILTERS = {"brew"}
 
+# Commands that should NEVER be hooked as shell wrapper functions to avoid
+# interfering with core system utilities, pipes, or basic shell builtins.
+CORE_SHELL_UTILITIES = {
+    "curl", "find", "ls", "grep", "egrep", "fgrep", "rgrep",
+    "cat", "head", "tail", "echo", "printf", "sed", "awk",
+    "tar", "unzip", "zip", "rm", "cp", "mv"
+}
+
 def extract_base_commands():
     """Extract hookable command names from loaded TOML filters,
-    skipping platform-irrelevant and catch-all filters."""
+    skipping platform-irrelevant, core utilities, and catch-all filters."""
     is_windows = platform.system() == "Windows"
     skip_filters = UNIX_ONLY_FILTERS if is_windows else WINDOWS_ONLY_FILTERS
     
@@ -30,11 +38,18 @@ def extract_base_commands():
         if filter_id in skip_filters:
             continue
             
+        # Skip core shell utilities from auto-hooking
+        if filter_id in CORE_SHELL_UTILITIES:
+            continue
+            
         # Extract command name from regex pattern like '^npm\b'
         pattern = f["match_command"].pattern
         match = re.search(r'\^?([a-zA-Z0-9_-]+)', pattern)
         if match:
             cmd_name = match.group(1)
+            # Skip if resolved command name is a core utility
+            if cmd_name in CORE_SHELL_UTILITIES:
+                continue
             # Sanity check: skip names that are clearly not CLI commands
             if len(cmd_name) > 1 and cmd_name.isascii():
                 cmds.append(cmd_name)

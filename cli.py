@@ -2,7 +2,7 @@ import sys
 import subprocess
 from filters.engine import engine
 
-VERSION = "v1.4.3"
+VERSION = "v1.5.0"
 
 def print_usage():
     print("Usage: denoiser <command> [args...]")
@@ -96,6 +96,25 @@ def run_test():
                 "   Compiling serde v1.0.193\n"
                 "   Compiling my-project v0.1.0 (/home/user/my-project)\n"
                 "    Finished dev [unoptimized + debuginfo] target(s) in 12.34s\n"
+            ),
+        },
+        {
+            "name": "curl (download)",
+            "command": "curl https://api.example.com/data",
+            "output": (
+                "  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n"
+                "                                 Dload  Upload   Total   Spent    Left  Speed\n"
+                "100  1234  100  1234    0     0   4567      0 --:--:-- --:--:-- --:--:--  4570\n"
+                "{\"status\": \"ok\", \"data\": [1, 2, 3]}\n"
+            ),
+        },
+        {
+            "name": "find (permission warnings)",
+            "command": "find /var -name test.log",
+            "output": (
+                "find: /var/audit: Permission denied\n"
+                "find: /var/protected: Operation not permitted\n"
+                "/var/log/test.log\n"
             ),
         },
         {

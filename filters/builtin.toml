@@ -249,6 +249,62 @@ strip_lines_matching = [
 ]
 on_empty = "[DeNoiser] PowerShell: Command completed."
 
+[filters.curl]
+description = "Filter curl download progress tables and transfer stats"
+match_command = "^curl\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*% Total\\s+% Received.*",
+  "^\\s*Dload\\s+Upload\\s+Total.*",
+  "^\\s*\\d+\\s+[\\d.kKMGTbB-]+\\s+\\d+\\s+[\\d.kKMGTbB-]+\\s+\\d+\\s+[\\d.kKMGTbB-]+\\s+\\d+\\s+[\\d.kKMGTbB-]+\\s+[:0-9-]+\\s+[:0-9-]+\\s+[:0-9-]+\\s+[\\d.kKMGTbB-]+",
+  "^\\s*$"
+]
+
+[filters.find]
+description = "Filter find permission denied and missing directory warnings"
+match_command = "^find\\b"
+strip_lines_matching = [
+  "^find:\\s+.*:\\s+(Permission denied|Operation not permitted|No such file or directory)\\s*$",
+  "^\\s*$"
+]
+
+[filters.ls]
+description = "Filter ls directory listings noise"
+match_command = "^ls\\b"
+strip_lines_matching = [
+  "^total\\s+\\d+\\s*$",
+  ".*\\.DS_Store\\s*$",
+  "^\\s*$"
+]
+
+[filters.grep]
+description = "Filter grep binary matches and permission errors"
+match_command = "^grep\\b|^egrep\\b|^fgrep\\b|^rgrep\\b"
+strip_lines_matching = [
+  "^Binary file .* matches\\s*$",
+  "^grep:\\s+.*:\\s+(Permission denied|Operation not permitted|No such file or directory|Is a directory)\\s*$",
+  "^\\s*$"
+]
+
+[filters.unzip]
+description = "Filter unzip verbose extraction logs"
+match_command = "^unzip\\b|^zip\\b"
+strip_lines_matching = [
+  "^Archive:\\s+.*",
+  "^\\s*(inflating|extracting|creating|linking|adding):\\s+.*",
+  "^\\s*$"
+]
+on_empty = "[DeNoiser] unzip: Archive extracted successfully."
+
+[filters.tar]
+description = "Filter tar verbose extraction logs"
+match_command = "^tar\\b"
+strip_lines_matching = [
+  "^\\s*[xatv]\\s+\\S+.*",
+  "^\\s*$"
+]
+on_empty = "[DeNoiser] tar: Archive operation completed."
+
 # ─────────────────────────────────────────────────
 # Fallback: Catches any command not matched above.
 # Uses strip_lines_matching to remove common noise
